@@ -1,43 +1,43 @@
-from rational import Rational
+from Rational import Rational
 
 
 class RationalList:
-    def __init__(self, initial_elements=None):
-        self.elements = []
-        if initial_elements is not None:
-            for elem in initial_elements:
-                self.add(elem)
+    def __init__(self, elements=None):
+        self.data = []
+        if elements is not None:
+            for e in elements:
+                self.append(e)
 
-    def add(self, element):
-        if isinstance(element, int):
-            element = Rational(element, 1)
-        elif not isinstance(element, Rational):
+    def append(self, value):
+        if isinstance(value, int):
+            value = Rational(value, 1)
+        elif not isinstance(value, Rational):
             raise TypeError("допустимі тільки int або Rational")
-        self.elements.append(element)
+        self.data.append(value)
 
     def __getitem__(self, index):
-        return self.elements[index]
+        return self.data[index]
 
-    def __setitem__(self, index, element):
-        if isinstance(element, int):
-            element = Rational(element, 1)
-        elif not isinstance(element, Rational):
+    def __setitem__(self, index, value):
+        if isinstance(value, int):
+            value = Rational(value, 1)
+        elif not isinstance(value, Rational):
             raise TypeError("допустимі тільки int або Rational")
-        self.elements[index] = element
+        self.data[index] = value
 
     def __len__(self):
-        return len(self.elements)
+        return len(self.data)
 
     def __add__(self, other):
-        new_list = RationalList(self.elements)
+        result = RationalList(self.data)
         if isinstance(other, RationalList):
-            for item in other:
-                new_list.add(item)
+            for v in other:
+                result.append(v)
         elif isinstance(other, (int, Rational)):
-            new_list.add(other)
+            result.append(other)
         else:
             raise TypeError("можна додавати тільки RationalList або число")
-        return new_list
+        return result
 
     def __radd__(self, other):
         if isinstance(other, (int, Rational)):
@@ -46,47 +46,51 @@ class RationalList:
 
     def __iadd__(self, other):
         if isinstance(other, RationalList):
-            for item in other:
-                self.add(item)
+            for v in other:
+                self.append(v)
         elif isinstance(other, (int, Rational)):
-            self.add(other)
+            self.append(other)
         else:
             raise TypeError("можна додавати тільки RationalList або число")
         return self
 
     def __iter__(self):
-        return iter(self.elements)
+        sorted_data = sorted(self.data, key=lambda x: (-x._denominator, -x._numerator))
+        return iter(sorted_data)
 
 
-def convert_to_rational(token):
-    token = token.strip()
-    if '/' in token:
-        return Rational(token)
-    return Rational(int(token), 1)
+def parse_rational(s):
+    s = s.strip()
+    if '/' in s:
+        return Rational(s)
+    return Rational(int(s), 1)
 
 
-def load_rational_list(file_path):
-    rat_list = RationalList()
-    with open(file_path, encoding='utf-8') as file:
-        for line in file:
-            for token in line.split():
-                rat_list.add(convert_to_rational(token))
-    return rat_list
+def read_rational_list(filename):
+    lst = RationalList()
+    with open(filename, encoding='utf-8') as f:
+        for line in f:
+            for part in line.split():
+                lst.append(parse_rational(part))
+    return lst
 
 
-def total_sum(r_list):
-    sum_result = Rational(0, 1)
-    for fraction in r_list:
-        sum_result = sum_result + fraction
-    return sum_result
+def sum_rational_list(lst):
+    result = Rational(0, 1)
+    for r in lst:
+        result = result + r
+    return result
 
 
-if __name__ == "__main__":
-    filenames = ["input01", "input02", "input03"]
-    for name in filenames:
+if name == "__main__":
+    files = ["input01.txt", "input02.txt", "input03.txt"]
+    for fname in files:
         try:
-            rl = load_rational_list(name)
-            summation = total_sum(rl)
-            print(f"{name} {summation} {summation()}")
-        except Exception as err:
-            print(f"{name} {err}")
+            rl = read_rational_list(fname)
+            print(f"\n{fname}:")
+            for r in rl:
+                print(r, end=" ")
+            s = sum_rational_list(rl)
+            print(f"\nSum: {s} ({s()})")
+        except Exception as e:
+            print(f"{fname} {e}")
