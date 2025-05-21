@@ -1,174 +1,106 @@
 import math
 
+class RationalError(ZeroDivisionError):
+    def __init__(self, message="знаменник не може дорівнювати нулю"):
+        super().__init__(message)
+
+class RationalValueError(ValueError):
+    def __init__(self, message="невірне значення для операцій з Rational"):
+        super().__init__(message)
 
 class Rational:
-    def __init__(self, numerator, denominator=None):
-        if denominator is None:
-            if isinstance(numerator, str):
+    def __init__(self, a, b=None):
+        if b is None:
+            if isinstance(a, str):
                 try:
-                    num_str, den_str = numerator.split('/')
-                    self.num = int(num_str)
-                    self.den = int(den_str)
-                except Exception as err:
-                    raise ValueError("Невірний формат рядка. Має бути 'n/d'") from err
-            elif isinstance(numerator, Rational):
-                self.num = numerator.num
-                self.den = numerator.den
+                    num_str, den_str = a.split('/')
+                    self.n = int(num_str)
+                    self.d = int(den_str)
+                except Exception as e:
+                    raise RationalValueError("невірний формат рядка. Має бути 'n/d'") from e
+            elif isinstance(a, Rational):
+                self.n = a.n
+                self.d = a.d
             else:
-                raise ValueError("Непідтримуваний тип аргументів")
+                raise RationalValueError("непідтримуваний тип аргументів")
         else:
-            if isinstance(numerator, int) and isinstance(denominator, int):
-                self.num = numerator
-                self.den = denominator
+            if isinstance(a, int) and isinstance(b, int):
+                self.n = a
+                self.d = b
             else:
-                raise ValueError("Чисельник і знаменник мають бути цілими числами")
-        if self.den == 0:
-            raise ZeroDivisionError("Знаменник не може дорівнювати нулю")
-        if self.den < 0:
-            self.num = -self.num
-            self.den = -self.den
-        self._simplify()
+                raise RationalValueError("чисельник і знаменник мають бути цілими числами")
 
-    def _simplify(self):
-        common_divisor = math.gcd(self.num, self.den)
-        if common_divisor:
-            self.num //= common_divisor
-            self.den //= common_divisor
+        if self.d == 0:
+            raise RationalError()
+        if self.d < 0:
+            self.n = -self.n
+            self.d = -self.d
+        self._reduce()
+
+    def _reduce(self):
+        g = math.gcd(self.n, self.d)
+        if g:
+            self.n //= g
+            self.d //= g
 
     def __str__(self):
-        return f"{self.num}/{self.den}"
+        return f"{self.n}/{self.d}"
 
     def __repr__(self):
-        return f"Rational({self.num}, {self.den})"
+        return f"Rational({self.n}, {self.d})"
 
     def __add__(self, other):
         if isinstance(other, int):
             other = Rational(other, 1)
         if isinstance(other, Rational):
-            new_num = self.num * other.den + other.num * self.den
-            new_den = self.den * other.den
-            return Rational(new_num, new_den)
-        raise TypeError("Додавання можливе лише з типом int або Rational")
+            return Rational(self.n * other.d + other.n * self.d, self.d * other.d)
+        raise RationalValueError("додавання можливе лише з типом int або Rational")
 
     def __sub__(self, other):
         if isinstance(other, int):
             other = Rational(other, 1)
         if isinstance(other, Rational):
-            new_num = self.num * other.den - other.num * self.den
-            new_den = self.den * other.den
-            return Rational(new_num, new_den)
-        raise TypeError("Віднімання можливе лише з типом int або Rational")
+            return Rational(self.n * other.d - other.n * self.d, self.d * other.d)
+        raise RationalValueError("віднімання можливе лише з типом int або Rational")
 
     def __mul__(self, other):
         if isinstance(other, int):
             other = Rational(other, 1)
         if isinstance(other, Rational):
-            return Rational(self.num * other.num, self.den * other.den)
-        raise TypeError("Множення можливе лише з типом int або Rational")
+            return Rational(self.n * other.n, self.d * other.d)
+        raise RationalValueError("множення можливе лише з типом int або Rational")
 
     def __truediv__(self, other):
         if isinstance(other, int):
             if other == 0:
-                raise ZeroDivisionError("Ділення на нуль")
+                raise RationalError("ділення на нуль")
             other = Rational(other, 1)
         if isinstance(other, Rational):
-            if other.num == 0:
-                raise ZeroDivisionError("Ділення на нуль")
-            return Rational(self.num * other.den, self.den * other.num)
-        raise TypeError("Ділення можливе лише з типом int або Rational")
+            if other.n == 0:
+                raise RationalError("ділення на нуль")
+            return Rational(self.n * other.d, self.d * other.n)
+        raise RationalValueError("ділення можливе лише з типом int або Rational")
 
     def __call__(self):
-        return self.num / self.den
+        return self.n / self.d
 
     def __getitem__(self, key):
         if key == "n":
-            return self.num
-        if key == "d":
-            return self.den
-        raise KeyError("Ключ має бути 'n' для чисельника або 'd' для знаменника")
+            return self.n
+        elif key == "d":
+            return self.d
+        else:
+            raise KeyError("ключ має бути 'n' для чисельника або 'd' для знаменника")
 
     def __setitem__(self, key, value):
         if not isinstance(value, int):
-            raise ValueError("Нове значення має бути цілим числом")
+            raise RationalValueError("нове значення має бути цілим числом")
         if key == "n":
-            self.num = value
+            self.n = value
         elif key == "d":
             if value == 0:
-                raise ZeroDivisionError("Знаменник не може бути 0")
-            self.den = value
+                raise RationalError("знаменник не може бути 0")
+            self.d = value
         else:
-            raise KeyError("Ключ має бути 'n' або 'd'")
-        self._simplify()
-
-
-def evaluate_expression(expression: str) -> Rational:
-    expr_str = expression.replace(" ", "")
-    index = 0
-
-    def parse_number():
-        nonlocal index
-        start_index = index
-        while index < len(expr_str) and (expr_str[index].isdigit() or expr_str[index] == '/'):
-            index += 1
-        token = expr_str[start_index:index]
-        return Rational(token) if '/' in token else Rational(int(token), 1)
-
-    def parse_factor():
-        nonlocal index
-        if index < len(expr_str) and expr_str[index] == '-':
-            index += 1
-            return Rational(0, 1) - parse_factor()
-        if index < len(expr_str) and expr_str[index] == '(':
-            index += 1  # Пропускаємо відкриваючу дужку
-            result = parse_expr()
-            if index >= len(expr_str) or expr_str[index] != ')':
-                raise ValueError("Відсутня закриваюча дужка")
-            index += 1  # Пропускаємо закриваючу дужку
-            return result
-        return parse_number()
-
-    def parse_term():
-        nonlocal index
-        result = parse_factor()
-        while index < len(expr_str) and expr_str[index] in "*/":
-            op = expr_str[index]
-            index += 1
-            if op == '*':
-                result = result * parse_factor()
-            elif op == '/':
-                result = result / parse_factor()
-        return result
-
-    def parse_expr():
-        nonlocal index
-        result = parse_term()
-        while index < len(expr_str) and expr_str[index] in '+-':
-            op = expr_str[index]
-            index += 1
-            if op == '+':
-                result = result + parse_term()
-            else:
-                result = result - parse_term()
-        return result
-
-    final_result = parse_expr()
-    if index != len(expr_str):
-        raise ValueError("Невірний формат виразу")
-    return final_result
-
-
-if __name__ == "__main__":
-    test_expressions = [
-        "4 - 92 - 79 * 59 * 90/16 * 75 - 55 * 82/41 * 19",
-        "48 + 74/40 * 64 * 93/50 * 52/77 * 57 * 45/95 * 30 * 77/20 * 74 * 59/27 + 29 + 18 * 84/19 - 84/73 + 56/66 - 62 - 99 + 9 * 8 + 71/19 * 51 * 35 * 29 + 86/80 + 45 * 42 * 92 * 98/78 * 33/92 + 70",
-        "9 * 40 + 96 * 83 - 43 - 69 + 12 * 48/65 * 10 - 90"
-    ]
-    for idx, exp in enumerate(test_expressions, start=1):
-        try:
-            result_obj = evaluate_expression(exp)
-            decimal_val = result_obj()
-            print(f"Вираз {idx}: {exp}")
-            print(f"  Результат як дріб: {result_obj}")
-            print(f"  Десятковий результат: {decimal_val:.3f}\n")
-        except Exception as exc:
-            print(f"Помилка в обчисленні виразу {idx}: {exc}\n")
+            raise KeyError("ключ має бути 'n' або 'd'")
+        self._reduce()
