@@ -1,4 +1,4 @@
-from Rational import Rational
+from rational import Rational
 
 
 class RationalList:
@@ -55,7 +55,7 @@ class RationalList:
         return self
 
     def __iter__(self):
-        sorted_data = sorted(self.data, key=lambda x: (-x._denominator, -x._numerator))
+        sorted_data = sorted(self.data, key=lambda x: (-x.d, -x.n))
         return iter(sorted_data)
 
 
@@ -83,13 +83,11 @@ def sum_rational_list(lst):
 
 
 if name == "__main__":
-    files = ["input01.txt", "input02.txt", "input03.txt"]
+    files = ["input01", "input02", "input03"]
     for fname in files:
         try:
             rl = read_rational_list(fname)
             print(f"\n{fname}:")
-            for r in rl:
-                print(r, end=" ")
             s = sum_rational_list(rl)
             print(f"\nSum: {s} ({s()})")
         except Exception as e:
